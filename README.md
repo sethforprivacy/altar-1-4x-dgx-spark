@@ -75,6 +75,23 @@ python3 tests/prefix_cache.py --url http://127.0.0.1:8025 \
   --key-file /private/path/altar.key --output results/prefix-cache.json
 ```
 
+## Measure serving performance
+
+The included probes use synthetic token inputs and write their results under the ignored `results/` directory. Run them on an idle deployment with a fresh label or cache salt for each run:
+
+```sh
+python3 tests/prefill.py --url http://127.0.0.1:8025 \
+  --key-file /private/path/altar.key --depths 8192,32768 \
+  --concurrencies 1,4 --repetitions 3 --label run-001 \
+  --output results/prefill-run-001.json
+python3 tests/throughput.py --url http://127.0.0.1:8025 \
+  --key-file /private/path/altar.key --prompt-tokens 8192 \
+  --output-tokens 256 --concurrency 4 --cache-salt run-001 \
+  --output results/decode-run-001.json
+```
+
+The prefill probe reports time to first token and aggregate prompt-token rate. The decode probe reports generated-token rate and total wall time. Keep run settings with each result when comparing configurations.
+
 Keep generated results, logs, host inventories, credentials, and rank configurations outside version control. The local watchdog stops a rank after two consecutive one-second samples below 6 GiB available host memory, or immediately below 2 GiB. Do not lower these thresholds to make a launch succeed.
 
 Run CPU-only checks before changing the launcher or guards:
