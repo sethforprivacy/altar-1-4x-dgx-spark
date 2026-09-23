@@ -1,0 +1,4 @@
+SPDX-License-Identifier: Apache-2.0
+SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+
+These adapter patches modify Apache-2.0 vLLM source in the pinned SparkRing image. The modified files retain their upstream SPDX headers. See ../../licenses/Apache-2.0.txt. Original patch application scripts are MIT licensed.

@@ -1,0 +1,13 @@
+--- a/b12x_mla_sparse.py
++++ b/b12x_mla_sparse.py
+@@ -1471,7 +1471,9 @@
+         return PreparedCall(
+             run=lambda: state.run(binding, kv_cache=kv_cache),
+             produce=produce,
+-            owners=(q, selected, cache_lengths, selected_lengths, scratch, binding),
++            # The call closures own priming buffers until synchronization.
++            # Published plans use fresh runtime bindings; retain no probe tensors.
++            owners=(),
+         )
+ 
+     def get_b12x_preparation_units(

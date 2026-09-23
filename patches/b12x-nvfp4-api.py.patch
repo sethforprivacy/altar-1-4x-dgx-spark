@@ -1,0 +1,23 @@
+SPDX-License-Identifier: Apache-2.0
+Upstream: local-inference-lab/b12x @ a83336581a3a907076e60797df69ab66df5a2ff1
+Local modification, 2026-09-22: Expose the existing GLM DSA NVFP4 cache writer required by vLLM.
+See ../licenses/Apache-2.0.txt and ../THIRD_PARTY_NOTICES.md.
+
+--- a/b12x/attention/sparse_mla/api.py
++++ b/b12x/attention/sparse_mla/api.py
+@@ -9,6 +9,7 @@
+ 
+ from b12x._lib.gating import default_is_supported
+ from b12x.preparation import FrozenMapping, Plan
++from .._shared.mla.kv_cache import concat_and_cache_nvfp4_mla_fp8_rope
+ from .._shared.mla.traits import ModelType
+ from .._shared.mla.api import (
+     MLASparseDecodeMetadata as DecodeMetadata,
+@@ -181,6 +182,7 @@
+     "run",
+     "plan_cache_writer",
+     "plan_pooled_selection",
++    "concat_and_cache_nvfp4_mla_fp8_rope",
+     "concat_and_cache_glm_next_mla",
+     "concat_and_cache_glm_next_mla_fp8",
+     "concat_and_cache_glm_next_mla_nvfp4",

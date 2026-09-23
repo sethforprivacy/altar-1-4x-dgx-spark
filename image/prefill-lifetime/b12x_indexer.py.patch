@@ -1,0 +1,13 @@
+--- a/b12x_indexer.py
++++ b/b12x_indexer.py
+@@ -514,7 +514,9 @@
+                     output_scores=scores,
+                 ),
+                 produce=produce,
+-                owners=(q, weights, lengths, pages, output, scores, scratch, binding),
++                # The call closures own priming buffers until synchronization.
++                # Published plans use fresh runtime bindings; retain no probe tensors.
++                owners=(),
+             )
+ 
+         return make_call

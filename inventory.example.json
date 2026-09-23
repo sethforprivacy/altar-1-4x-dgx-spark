@@ -1,0 +1,9 @@
+{
+  "prefix": "altar",
+  "ranks": [
+    {"host": "spark0", "recipe_dir": "/home/USER/altar-1-4x-dgx-spark", "env_file": "/home/USER/altar-rank.env", "cache_path": "/srv/altar-cache"},
+    {"host": "spark1", "recipe_dir": "/home/USER/altar-1-4x-dgx-spark", "env_file": "/home/USER/altar-rank.env", "cache_path": "/srv/altar-cache"},
+    {"host": "spark2", "recipe_dir": "/home/USER/altar-1-4x-dgx-spark", "env_file": "/home/USER/altar-rank.env", "cache_path": "/srv/altar-cache"},
+    {"host": "spark3", "recipe_dir": "/home/USER/altar-1-4x-dgx-spark", "env_file": "/home/USER/altar-rank.env", "cache_path": "/srv/altar-cache"}
+  ]
+}

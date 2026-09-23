@@ -1,0 +1,4 @@
+SPDX-License-Identifier: Apache-2.0
+SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+
+The adapter patch and CPU check derive from the Apache-2.0 vLLM B12X sparse MLA adapter in the pinned SparkRing runtime. Upstream copyright and SPDX headers are retained. See ../../licenses/Apache-2.0.txt. Original patch application scripts are MIT licensed.

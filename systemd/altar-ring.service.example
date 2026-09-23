@@ -1,0 +1,16 @@
+[Unit]
+Description=Altar TP4 ring with local memory guards and ring supervision
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+User=USER
+WorkingDirectory=/home/USER/altar-1-4x-dgx-spark
+ExecStart=/usr/bin/python3 /home/USER/altar-1-4x-dgx-spark/run-ring.py --inventory /home/USER/altar-site.json --log /home/USER/altar-ring-memory.jsonl
+Restart=no
+KillMode=mixed
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

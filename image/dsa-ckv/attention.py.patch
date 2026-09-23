@@ -1,0 +1,37 @@
+--- a/vllm/models/deepseek_v32/attention.py
++++ b/vllm/models/deepseek_v32/attention.py
+@@ -592,6 +592,16 @@
+             )
+             return
+ 
++        # Match MLAAttention's existing full-CKV route: local query heads
++        # already see every DCP shard, so no query gather or LSE merge is needed.
++        ckv_selector = getattr(self.impl, "uses_full_ckv_dcp", None)
++        full_ckv_dcp = (
++            not self.use_pcp
++            and self.impl.dcp_world_size > 1
++            and callable(ckv_selector)
++            and ckv_selector(attn_metadata, num_actual)
++        )
++
+         if self._fp8_kv_needs_view:
+             kv_cache = kv_cache.view(torch.float8_e4m3fn)
+         if self._fp8_query:
+@@ -606,7 +616,7 @@
+             if isinstance(mqa_q_arg, tuple):
+                 mqa_q_arg = torch.cat(mqa_q_arg, dim=-1)
+             mqa_q_arg = get_tp_group().all_gather(mqa_q_arg, dim=1)
+-        elif not self.use_pcp and self.impl.dcp_world_size > 1:
++        elif not self.use_pcp and self.impl.dcp_world_size > 1 and not full_ckv_dcp:
+             assert self.dcp_manager is not None
+             if isinstance(mqa_q_arg, tuple):
+                 mqa_q_arg = torch.cat(mqa_q_arg, dim=-1)
+@@ -616,7 +626,7 @@
+             mqa_q_arg, kv_cache, attn_metadata, self
+         )
+ 
+-        if self.impl.dcp_world_size > 1:
++        if self.impl.dcp_world_size > 1 and not full_ckv_dcp:
+             assert lse is not None and self.dcp_manager is not None
+             seq_lens: torch.Tensor | None
+             query_start_loc: torch.Tensor | None

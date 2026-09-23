@@ -1,0 +1,10 @@
+{
+  "vllm/models/deepseek_v32/attention.py": {
+    "before": "a3a3a784e798a3669e75527f724e9b2d549f0e4c025b2f4524026dc0244f0e39",
+    "after": "68e400e5e3717b280370d435b0bc7f1992d7e7e3d699c7eb8c6a7e668700ba6f"
+  },
+  "vllm/v1/attention/backends/mla/b12x_mla_sparse.py": {
+    "before": "1c6fba6e5d5b98e29a5141a0d3d3f929376220ba1c3530dee1e0f6108bf89c1b",
+    "after": "8c5fb26148adb3cf1c82a9a17a00c56c52051f5e453e90dfc29413aa65a05dd8"
+  }
+}

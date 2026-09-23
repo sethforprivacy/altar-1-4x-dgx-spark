@@ -1,0 +1,25 @@
+SPDX-License-Identifier: Apache-2.0
+SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+Upstream: local-inference-lab/vllm (pinned SparkRing image)
+Local modification, 2026-09-22: Forward the sparse attention index group builder to its parent constructor.
+See ../licenses/Apache-2.0.txt and ../THIRD_PARTY_NOTICES.md.
+
+--- a/vllm/models/deepseek_v32/nvidia/b12x.py
++++ b/vllm/models/deepseek_v32/nvidia/b12x.py
+@@ -68,13 +68,15 @@
+ class DeepseekV32B12xAttention(DeepseekV32Attention):
+     indexer_cls = B12xDSAIndexer
+ 
+-    def __init__(self, vllm_config, config, prefix, topk_indices_buffer=None):
++    def __init__(self, vllm_config, config, prefix, topk_indices_buffer=None,
++                 index_group_builder=None):
+         super().__init__(
+             vllm_config,
+             config,
+             prefix,
+             topk_indices_buffer,
+             attn_backend=_get_sparse_mla_backend(vllm_config),
++            index_group_builder=index_group_builder,
+         )
+ 
+ 

@@ -1,0 +1,29 @@
+name: CPU safety checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safety:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Check source syntax
+        run: |
+          bash -n run-rank.sh
+          python3 -m compileall -q .
+      - name: Verify memory gates and emergency stop
+        run: python3 tests/test_memory_guard.py
+      - name: Verify controller and watcher shutdown
+        run: python3 tests/test_controller_shutdown.py
+      - name: Verify experimental CKV launcher opt-in
+        run: python3 tests/test_ckv_launcher.py

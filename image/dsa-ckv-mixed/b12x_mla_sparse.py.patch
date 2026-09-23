@@ -1,0 +1,46 @@
+--- a/vllm/v1/attention/backends/mla/b12x_mla_sparse.py
++++ b/vllm/v1/attention/backends/mla/b12x_mla_sparse.py
+@@ -239,7 +239,10 @@
+         and (is_glm_next or is_glm_dsa)
+         and dcp_world_size > 1
+         and max_query_len > 1
+-        and num_decode_tokens == 0
++        and (
++            num_decode_tokens == 0
++            or (is_glm_dsa and os.environ.get("ALTAR_ENABLE_DSA_CKV_MIXED", "0") == "1")
++        )
+         and num_tokens > min_tokens
+         and num_tokens <= max_tokens
+     )
+@@ -1338,6 +1341,10 @@
+         kernel_page_size = (
+             int(vllm_config.cache_config.block_size) if self._is_glm_next else 64
+         )
++        self._altar_dsa_mixed_ckv = (
++            _altar_dsa_ckv_requested(hf_config, kv_cache_dtype)
++            and os.environ.get("ALTAR_ENABLE_DSA_CKV_MIXED", "0") == "1"
++        )
+         self._ckv_gather_enabled = (
+             (self._is_glm_next or _altar_dsa_ckv_requested(hf_config, kv_cache_dtype))
+             and self.dcp_world_size > 1
+@@ -1808,7 +1815,10 @@
+             self._ckv_gather_enabled
+             and self._kernel_page_size_finalized
+             and attn_metadata.dcp_ckv_gather_eligible
+-            and attn_metadata.num_decode_tokens == 0
++            and (
++                attn_metadata.num_decode_tokens == 0
++                or getattr(self, "_altar_dsa_mixed_ckv", False)
++            )
+             and num_tokens == attn_metadata.num_actual_tokens
+             and 0 < attn_metadata.dcp_padded_total_tokens <= self._ckv_local_capacity
+             and attn_metadata.dcp_local_total_tokens
+@@ -1905,6 +1915,8 @@
+         use_ckv_gather = plan_key[0] == "ckv_extend"
+         if use_ckv_gather:
+             logger.info_once("Using full-CKV gather for B12X DCP prefill (GLMNext=%s)", self._is_glm_next)
++        if use_ckv_gather and attn_metadata.num_decode_tokens:
++            logger.info_once("Executing experimental Altar CKV gather for a mixed prefill/decode batch")
+         input_num_heads = self.num_heads if use_ckv_gather else self._input_num_heads
+         workspace_specs = self._workspace_specs(
+             input_num_heads=input_num_heads,

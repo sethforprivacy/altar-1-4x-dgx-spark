@@ -1,0 +1,30 @@
+# Local environment and credentials
+.venv/
+__pycache__/
+*.py[cod]
+site.json
+rank.env
+*.env
+*.env.local
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+*.secret
+secrets/
+.local/
+
+# Generated operational data
+results/
+evidence/
+benchmarks/
+benchmark/
+reports/
+logs/
+*.log
+*.jsonl
+*.trace
+*.profile
+*.receipt.json
+model-verification.json

@@ -1,0 +1,103 @@
+--- a/vllm/v1/attention/backends/mla/b12x_mla_sparse.py
++++ b/vllm/v1/attention/backends/mla/b12x_mla_sparse.py
+@@ -4,6 +4,7 @@
+ 
+ from dataclasses import dataclass, replace
+ from math import gcd
++import os
+ from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
+ 
+ import numpy as np
+@@ -93,6 +94,22 @@
+     return vllm_config.model_config.hf_text_config
+ 
+ 
++def _altar_dsa_ckv_requested(hf_config: object, cache_dtype: str) -> bool:
++    """Opt in to the experimental full-GLM FP8 cached-KV prefill path."""
++    if os.environ.get("ALTAR_ENABLE_DSA_CKV_GATHER", "0") != "1":
++        return False
++    if not _is_glm_dsa_config(hf_config):
++        return False
++    if cache_dtype not in ("fp8", "fp8_ds_mla"):
++        raise ValueError("Experimental GLM DSA CKV gather requires FP8 KV")
++    expected = {"kv_lora_rank": 512, "qk_rope_head_dim": 64,
++                "index_topk": 2048, "num_attention_heads": 64}
++    for name, value in expected.items():
++        if getattr(hf_config, name, None) != value:
++            raise ValueError(f"Experimental GLM DSA CKV gather requires {name}={value}")
++    return True
++
++
+ def _is_glm_next_spec(spec: AttentionSpec) -> bool:
+     if isinstance(spec, MLAAttentionSpec) and spec.model_version == "glm5_next":
+         return True
+@@ -215,10 +232,11 @@
+     num_decode_tokens: int,
+     min_tokens: int,
+     max_tokens: int,
++    is_glm_dsa: bool = False,
+ ) -> bool:
+     return (
+         enabled
+-        and is_glm_next
++        and (is_glm_next or is_glm_dsa)
+         and dcp_world_size > 1
+         and max_query_len > 1
+         and num_decode_tokens == 0
+@@ -733,14 +751,19 @@
+             self._capture_is_prefilling = torch.zeros(
+                 max_reqs, dtype=torch.bool, device=device
+             )
++        self._altar_dsa_ckv = _altar_dsa_ckv_requested(
++            hf_config, vllm_config.cache_config.cache_dtype
++        )
+         self._ckv_gather_requested = (
+-            self.requires_glm_next_selector_metadata
++            (self.requires_glm_next_selector_metadata or self._altar_dsa_ckv)
+             and self.dcp_world_size > 1
+             and envs.VLLM_B12X_MLA_CKV_GATHER
+         )
+         if self._ckv_gather_requested:
+             hf_config = vllm_config.model_config.hf_text_config
+-            ckv_topk_tokens = int(hf_config.index_topk) + int(hf_config.index_kpool) - 1
++            ckv_topk_tokens = int(hf_config.index_topk)
++            if self.requires_glm_next_selector_metadata:
++                ckv_topk_tokens += int(hf_config.index_kpool) - 1
+             self.ckv_selected_indices_buffer = torch.empty(
+                 (max_tokens, ckv_topk_tokens), dtype=torch.int32, device=device
+             )
+@@ -958,6 +981,7 @@
+         if _use_b12x_full_ckv_gather(
+             enabled=self._ckv_gather_requested,
+             is_glm_next=self.requires_glm_next_selector_metadata,
++            is_glm_dsa=self._altar_dsa_ckv,
+             dcp_world_size=self.dcp_world_size,
+             max_query_len=common.max_query_len,
+             num_tokens=num_tokens,
+@@ -1315,7 +1339,7 @@
+             int(vllm_config.cache_config.block_size) if self._is_glm_next else 64
+         )
+         self._ckv_gather_enabled = (
+-            self._is_glm_next
++            (self._is_glm_next or _altar_dsa_ckv_requested(hf_config, kv_cache_dtype))
+             and self.dcp_world_size > 1
+             and envs.VLLM_B12X_MLA_CKV_GATHER
+         )
+@@ -1817,7 +1841,7 @@
+             record_bytes=self._cache_record_bytes,
+         ):
+             raise ValueError(
+-                "GLM5Next CKV gather requires native "
++                "B12X CKV gather requires native "
+                 f"{self._cache_record_bytes}-byte records; "
+                 f"got shape={tuple(kv_cache.shape)}, stride={kv_cache.stride()}"
+             )
+@@ -1880,7 +1904,7 @@
+         plan = self._plan(plan_key)
+         use_ckv_gather = plan_key[0] == "ckv_extend"
+         if use_ckv_gather:
+-            logger.info_once("Using full-CKV gather for GLM5Next B12X DCP prefill")
++            logger.info_once("Using full-CKV gather for B12X DCP prefill (GLMNext=%s)", self._is_glm_next)
+         input_num_heads = self.num_heads if use_ckv_gather else self._input_num_heads
+         workspace_specs = self._workspace_specs(
+             input_num_heads=input_num_heads,

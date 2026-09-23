@@ -1,0 +1,26 @@
+[
+  {
+    "file": "vllm/models/deepseek_v32/nvidia/b12x.py",
+    "before_sha256": "168fe90e560823a3edaa7199e8a5c9771d267e7c820b373ed09bb1cf2679109a",
+    "after_sha256": "8d095c25fb95d54e0d2a23b2c2393b282660d2431b12602a86969656a11c0841",
+    "license": "Apache-2.0",
+    "purpose": "Forward the sparse attention index group builder to its parent constructor.",
+    "patch": "b12x-index-group.patch"
+  },
+  {
+    "file": "b12x/attention/sparse_mla/__init__.py",
+    "patch": "b12x-nvfp4-init.py.patch",
+    "before_sha256": "296fc257fad0e8ee3edffea87d1a113f617583c8181044536cec08364906bb52",
+    "after_sha256": "719c462a161a1960cba0b0696a3587f332cf7c9ed23119c2e2eefe22f27dba74",
+    "license": "Apache-2.0",
+    "purpose": "Expose the existing GLM DSA NVFP4 cache writer required by vLLM."
+  },
+  {
+    "file": "b12x/attention/sparse_mla/api.py",
+    "patch": "b12x-nvfp4-api.py.patch",
+    "before_sha256": "cab492b8db7a8d2e0d364099c25be53277bcca8a4877d7ab6c31f9f04ed8d757",
+    "after_sha256": "da590b49a244987f3bb03df7b79f1fa82430e55e5e560f92d290b126d4e0536b",
+    "license": "Apache-2.0",
+    "purpose": "Expose the existing GLM DSA NVFP4 cache writer required by vLLM."
+  }
+]
